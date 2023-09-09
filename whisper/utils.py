@@ -208,6 +208,18 @@ class WriteSRT(SubtitlesWriter):
             print(f"{i}\n{start} --> {end}\n{text}\n", file=file, flush=True)
 
 
+class WriteSRTNew(SubtitlesWriter):
+    extension: str = "srt"
+    always_include_hours: bool = True
+    decimal_marker: str = ","
+    i = 1  # Starting from 1
+
+    def write_result(self, result: dict, file: TextIO, options: dict):
+        for (start, end, text) in self.iterate_result(result, options):
+            print(f"{self.i}\n{start} --> {end}\n{text}\n", flush=True)
+            self.i += 1
+
+
 class WriteTSV(ResultWriter):
     """
     Write a transcript to a file in TSV (tab-separated values) format containing lines like:

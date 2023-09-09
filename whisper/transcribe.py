@@ -1,4 +1,5 @@
 import argparse
+import io
 import os
 import warnings
 from typing import TYPE_CHECKING, Optional, Tuple, Union
@@ -26,7 +27,7 @@ from .utils import (
     make_safe,
     optional_float,
     optional_int,
-    str2bool,
+    str2bool, WriteSRTNew,
 )
 
 if TYPE_CHECKING:
@@ -47,6 +48,7 @@ def transcribe(
     word_timestamps: bool = False,
     prepend_punctuations: str = "\"'“¿([{-",
     append_punctuations: str = "\"'.。,，!！?？:：”)]}、",
+    highlight_words: bool,
     **decode_options,
 ):
     """
@@ -101,11 +103,15 @@ def transcribe(
     decode_options: dict
         Keyword arguments to construct `DecodingOptions` instances
 
+    highlight_words: dict
+        If highlight_words is True, words are highlighted
+
     Returns
     -------
     A dictionary containing the resulting text ("text") and segment-level details ("segments"), and
     the spoken language ("language"), which is detected when `decode_options["language"]` is None.
     """
+    formatter = WriteSRTNew("")
     dtype = torch.float16 if decode_options.get("fp16", True) else torch.float32
     if model.device == torch.device("cpu"):
         if torch.cuda.is_available():
@@ -337,10 +343,13 @@ def transcribe(
                         seek = previous_seek + seek_shift
 
             if verbose:
-                for segment in current_segments:
-                    start, end, text = segment["start"], segment["end"], segment["text"]
-                    line = f"[{format_timestamp(start)} --> {format_timestamp(end)}] {text}"
-                    print(make_safe(line))
+                options = {'highlight_words': highlight_words, 'max_line_count': None, 'max_line_width': None}
+                formatter.write_result({"segments": current_segments}, io.StringIO(), options)
+                # for segment in current_segments:
+                #
+                #     start, end, text = segment["start"], segment["end"], segment["text"]
+                #     line = f"[{format_timestamp(start)} --> {format_timestamp(end)}] {text}"
+                #     print(make_safe(line))
 
             # if a segment is instantaneous or does not contain text, clear it
             for i, segment in enumerate(current_segments):
@@ -453,7 +462,7 @@ def cli():
         warnings.warn("--max_line_count has no effect without --max_line_width")
     writer_args = {arg: args.pop(arg) for arg in word_options}
     for audio_path in args.pop("audio"):
-        result = transcribe(model, audio_path, temperature=temperature, **args)
+        result = transcribe(model, audio_path, temperature=temperature, highlight_words=writer_args["highlight_words"], **args)
         writer(result, audio_path, writer_args)
 
 
