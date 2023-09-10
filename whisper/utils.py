@@ -216,7 +216,7 @@ class WriteSRTNew(SubtitlesWriter):
 
     def write_result(self, result: dict, file: TextIO, options: dict):
         for (start, end, text) in self.iterate_result(result, options):
-            print(f"{self.i}\n{start} --> {end}\n{text}\n", flush=True)
+            yield f"{self.i}\n{start} --> {end}\n{text}\n"
             self.i += 1
 
 

@@ -344,7 +344,7 @@ def transcribe(
 
             if verbose:
                 options = {'highlight_words': highlight_words, 'max_line_count': None, 'max_line_width': None}
-                formatter.write_result({"segments": current_segments}, io.StringIO(), options)
+                yield formatter.write_result({"segments": current_segments}, io.StringIO(), options)
                 # for segment in current_segments:
                 #
                 #     start, end, text = segment["start"], segment["end"], segment["text"]
